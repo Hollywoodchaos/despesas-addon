@@ -1,0 +1,55 @@
+{
+  "app_title": "Расходы",
+  "app_subtitle": "Учёт домашних расходов",
+  "nav_registar": "Добавить расход",
+  "nav_categorias": "Категории",
+  "nav_fornecedores": "Поставщики",
+  "nav_pagamentos": "Способы оплаты",
+  "nav_pro": "Pro-версия",
+
+  "lbl_categoria": "Категория",
+  "lbl_fornecedor": "Поставщик",
+  "lbl_valor": "Сумма (€)",
+  "lbl_forma_pagamento": "Способ оплаты",
+  "lbl_nif": "ИНН (необязательно)",
+  "lbl_nome": "Название",
+
+  "btn_registar": "Добавить расход",
+  "btn_adicionar": "Добавить",
+  "btn_guardar": "Сохранить",
+  "btn_limpar": "Очистить",
+
+  "placeholder_categoria": "Выберите или создайте категорию",
+  "placeholder_fornecedor": "Выберите или создайте поставщика",
+  "placeholder_valor": "0.00",
+  "placeholder_nova_categoria": "Название новой категории",
+  "placeholder_novo_fornecedor": "Название нового поставщика",
+  "placeholder_nif": "Напр.: 500123456",
+  "placeholder_nova_forma": "Название нового способа оплаты",
+
+  "msg_sucesso_despesa": "Расход успешно добавлен!",
+  "msg_erro_generico": "Произошла ошибка. Попробуйте ещё раз.",
+  "msg_duplicado": "Похоже, такая запись уже существует (тот же поставщик, сумма и день).",
+  "msg_categoria_criada": "Категория создана.",
+  "msg_categoria_existe": "Такая категория уже существует.",
+  "msg_fornecedor_criado": "Поставщик создан.",
+  "msg_forma_criada": "Способ оплаты создан.",
+  "msg_forma_existe": "Такой способ оплаты уже существует.",
+  "msg_campos_obrigatorios": "Заполните категорию, поставщика и сумму.",
+
+  "section_categorias_title": "Управление категориями",
+  "section_fornecedores_title": "Управление поставщиками",
+  "section_pagamentos_title": "Управление способами оплаты",
+  "lista_vazia": "Здесь пока пусто.",
+
+  "pro_banner_title": "🔒 Функции Pro",
+  "pro_banner_text": "Разблокируйте сканирование счетов по QR-коду, графики и статистику, полную историю и поиск, редактирование/удаление записей и экспорт в Excel/CSV.",
+  "pro_feature_qr": "Сканирование счетов камерой (QR-код)",
+  "pro_feature_graficos": "Графики и статистика по категориям",
+  "pro_feature_historico": "Полная история и поиск",
+  "pro_feature_editar": "Редактирование и удаление записей",
+  "pro_feature_exportar": "Экспорт в Excel/CSV",
+  "pro_cta": "Узнать больше о Pro-версии",
+
+  "footer_versao": "Версия"
+}

@@ -1,0 +1,55 @@
+{
+  "app_title": "Expenses",
+  "app_subtitle": "Household expense tracking",
+  "nav_registar": "Add Expense",
+  "nav_categorias": "Categories",
+  "nav_fornecedores": "Suppliers",
+  "nav_pagamentos": "Payment Methods",
+  "nav_pro": "Pro Version",
+
+  "lbl_categoria": "Category",
+  "lbl_fornecedor": "Supplier",
+  "lbl_valor": "Amount (€)",
+  "lbl_forma_pagamento": "Payment Method",
+  "lbl_nif": "Tax ID (optional)",
+  "lbl_nome": "Name",
+
+  "btn_registar": "Add Expense",
+  "btn_adicionar": "Add",
+  "btn_guardar": "Save",
+  "btn_limpar": "Clear",
+
+  "placeholder_categoria": "Choose or create a category",
+  "placeholder_fornecedor": "Choose or create a supplier",
+  "placeholder_valor": "0.00",
+  "placeholder_nova_categoria": "New category name",
+  "placeholder_novo_fornecedor": "New supplier name",
+  "placeholder_nif": "e.g. 500123456",
+  "placeholder_nova_forma": "New payment method name",
+
+  "msg_sucesso_despesa": "Expense added successfully!",
+  "msg_erro_generico": "Something went wrong. Please try again.",
+  "msg_duplicado": "This entry seems to already exist (same supplier, amount and day).",
+  "msg_categoria_criada": "Category created.",
+  "msg_categoria_existe": "That category already exists.",
+  "msg_fornecedor_criado": "Supplier created.",
+  "msg_forma_criada": "Payment method created.",
+  "msg_forma_existe": "That payment method already exists.",
+  "msg_campos_obrigatorios": "Please fill in category, supplier and amount.",
+
+  "section_categorias_title": "Manage Categories",
+  "section_fornecedores_title": "Manage Suppliers",
+  "section_pagamentos_title": "Manage Payment Methods",
+  "lista_vazia": "Nothing here yet.",
+
+  "pro_banner_title": "🔒 Pro Features",
+  "pro_banner_text": "Unlock invoice scanning via QR code, charts and statistics, full history and search, editing/deleting entries, and Excel/CSV export.",
+  "pro_feature_qr": "Invoice scanning via camera (QR code)",
+  "pro_feature_graficos": "Charts and statistics by category",
+  "pro_feature_historico": "Full history and search",
+  "pro_feature_editar": "Edit and delete entries",
+  "pro_feature_exportar": "Export to Excel/CSV",
+  "pro_cta": "Learn more about the Pro version",
+
+  "footer_versao": "Version"
+}
