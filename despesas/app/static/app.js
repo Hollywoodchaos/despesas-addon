@@ -181,6 +181,21 @@ document.getElementById("btn-add-forma").addEventListener("click", async () => {
   }
 });
 
+async function carregarUltimosRegistos() {
+  const resp = await fetch("api/ultimos_registos");
+  const dados = await resp.json();
+  const registos = dados.historico || [];
+
+  const ul = document.getElementById("lista-ultimos-ul");
+  ul.innerHTML = registos.length
+    ? registos.map((r) => {
+        const data = (r.timestamp || "").replace("T", " ").slice(0, 16);
+        const valor = Number(r.valor).toFixed(2).replace(".", ",");
+        return `<li>${escapeHtml(data)} — ${escapeHtml(r.categoria)} — ${escapeHtml(r.fornecedor)} — ${valor} € — ${escapeHtml(r.forma_pagamento)}</li>`;
+      }).join("")
+    : `<li>${t("lista_vazia")}</li>`;
+}
+
 // ---------------------------------------------------------------------
 // Registar despesa
 // ---------------------------------------------------------------------
@@ -210,6 +225,7 @@ document.getElementById("form-despesa").addEventListener("submit", async (ev) =>
     document.getElementById("input-fornecedor").value = "";
     document.getElementById("input-valor").value = "";
     await carregarCategorias();
+    await carregarUltimosRegistos();
   } else if (dados.duplicado) {
     mostrarMensagem(t("msg_duplicado"), "erro");
   } else {
@@ -243,6 +259,7 @@ async function iniciar() {
     await carregarCategorias();
     await carregarFormasPagamento();
     await carregarFornecedoresDaCategoria();
+    await carregarUltimosRegistos();
   });
 
   document.getElementById("link-pro-cta").href = LINK_PRO;
@@ -251,6 +268,7 @@ async function iniciar() {
   await carregarCategorias();
   await carregarFormasPagamento();
   await carregarFornecedoresDaCategoria();
+  await carregarUltimosRegistos();
 }
 
 iniciar();
