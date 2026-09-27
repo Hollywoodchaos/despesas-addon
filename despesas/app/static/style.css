@@ -132,6 +132,7 @@ input, select {
   border: 1px solid var(--cor-borda);
   font-size: 14px;
 }
+.lista-simples li { font-family: 'Consolas', 'Courier New', monospace; font-size: 12px; line-height: 1.5; }
 
 .mensagem {
   padding: 12px 14px;
