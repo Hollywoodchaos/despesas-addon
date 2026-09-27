@@ -1,5 +1,5 @@
 name: "Despesas"
-version: "1.0.1"
+version: "1.0.2"
 slug: "despesas"
 description: "Regista despesas domésticas por categoria, fornecedor e forma de pagamento — interface própria em pt/en/es/fr/de/ru."
 url: "https://github.com/Hollywoodchaos/despesas-addon"
@@ -11,6 +11,7 @@ arch:
   - i386
 startup: application
 boot: auto
+init: false
 ingress: true
 ingress_port: 8099
 panel_icon: mdi:cash-multiple
