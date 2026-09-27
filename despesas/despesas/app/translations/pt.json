@@ -1,0 +1,55 @@
+{
+  "app_title": "Despesas",
+  "app_subtitle": "Registo de despesas domésticas",
+  "nav_registar": "Registar Despesa",
+  "nav_categorias": "Categorias",
+  "nav_fornecedores": "Fornecedores",
+  "nav_pagamentos": "Formas de Pagamento",
+  "nav_pro": "Versão Pro",
+
+  "lbl_categoria": "Categoria",
+  "lbl_fornecedor": "Fornecedor",
+  "lbl_valor": "Valor (€)",
+  "lbl_forma_pagamento": "Forma de Pagamento",
+  "lbl_nif": "NIF (opcional)",
+  "lbl_nome": "Nome",
+
+  "btn_registar": "Registar Despesa",
+  "btn_adicionar": "Adicionar",
+  "btn_guardar": "Guardar",
+  "btn_limpar": "Limpar",
+
+  "placeholder_categoria": "Escolhe ou cria uma categoria",
+  "placeholder_fornecedor": "Escolhe ou cria um fornecedor",
+  "placeholder_valor": "0.00",
+  "placeholder_nova_categoria": "Nome da nova categoria",
+  "placeholder_novo_fornecedor": "Nome do novo fornecedor",
+  "placeholder_nif": "Ex.: 500123456",
+  "placeholder_nova_forma": "Nome da nova forma de pagamento",
+
+  "msg_sucesso_despesa": "Despesa registada com sucesso!",
+  "msg_erro_generico": "Ocorreu um erro. Tenta outra vez.",
+  "msg_duplicado": "Este registo parece já existir (mesmo fornecedor, valor e dia).",
+  "msg_categoria_criada": "Categoria criada.",
+  "msg_categoria_existe": "Essa categoria já existe.",
+  "msg_fornecedor_criado": "Fornecedor criado.",
+  "msg_forma_criada": "Forma de pagamento criada.",
+  "msg_forma_existe": "Essa forma de pagamento já existe.",
+  "msg_campos_obrigatorios": "Preenche a categoria, o fornecedor e o valor.",
+
+  "section_categorias_title": "Gerir Categorias",
+  "section_fornecedores_title": "Gerir Fornecedores",
+  "section_pagamentos_title": "Gerir Formas de Pagamento",
+  "lista_vazia": "Ainda não há nada aqui.",
+
+  "pro_banner_title": "🔒 Funcionalidades Pro",
+  "pro_banner_text": "Desbloqueia leitura de faturas por QR code, gráficos e estatísticas, histórico e pesquisa completos, edição/eliminação de registos, e exportação para Excel/CSV.",
+  "pro_feature_qr": "Leitura de faturas por câmara (QR code)",
+  "pro_feature_graficos": "Gráficos e estatísticas por categoria",
+  "pro_feature_historico": "Histórico completo e pesquisa",
+  "pro_feature_editar": "Editar e eliminar registos",
+  "pro_feature_exportar": "Exportar para Excel/CSV",
+  "pro_cta": "Saber mais sobre a versão Pro",
+
+  "footer_versao": "Versão"
+}
