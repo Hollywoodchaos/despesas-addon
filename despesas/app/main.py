@@ -155,6 +155,16 @@ def api_add_despesa():
     return jsonify(chamar(db.add_despesa, categoria, fornecedor, valor, forma_pagamento, None, forcar, ""))
 
 
+@app.route("/api/ultimos_registos", methods=["GET"])
+def api_ultimos_registos():
+    """Versão grátis e "arcaica" do histórico: só os últimos registos,
+    sem pesquisa, sem edição/eliminação, sem filtros por data. A versão
+    Pro acrescenta pesquisa completa, edição e eliminação em cima disto
+    através de /api/historico e /api/pesquisar."""
+    LIMITE_GRATIS = 15
+    return jsonify(chamar(db.historico, LIMITE_GRATIS))
+
+
 # ---------------------------------------------------------------------
 # Funcionalidades PRO (bloqueadas nesta versão gratuita)
 # ---------------------------------------------------------------------
