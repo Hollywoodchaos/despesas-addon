@@ -11,7 +11,7 @@ function chaveIdiomaGuardada() {
 }
 
 async function carregarTraducoes(idioma) {
-  const resp = await fetch(`/api/traducoes/${idioma}`);
+  const resp = await fetch(`api/traducoes/${idioma}`);
   TRADUCOES = await resp.json();
   aplicarTraducoes();
 }
@@ -59,7 +59,7 @@ function configurarTabs() {
 // ---------------------------------------------------------------------
 
 async function carregarCategorias() {
-  const resp = await fetch("/api/categorias");
+  const resp = await fetch("api/categorias");
   const dados = await resp.json();
   const categorias = dados.categorias || [];
 
@@ -83,7 +83,7 @@ document.getElementById("btn-add-categoria").addEventListener("click", async () 
   const input = document.getElementById("input-nova-categoria");
   const nome = input.value.trim();
   if (!nome) return;
-  const resp = await fetch("/api/categorias", {
+  const resp = await fetch("api/categorias", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ nome }),
@@ -107,7 +107,7 @@ document.getElementById("btn-add-categoria").addEventListener("click", async () 
 async function carregarFornecedoresDaCategoria() {
   const categoria = document.getElementById("select-categoria-fornecedores").value;
   if (!categoria) return;
-  const resp = await fetch(`/api/fornecedores?categoria=${encodeURIComponent(categoria)}`);
+  const resp = await fetch(`api/fornecedores?categoria=${encodeURIComponent(categoria)}`);
   const dados = await resp.json();
   const fornecedores = dados.fornecedores || [];
 
@@ -127,7 +127,7 @@ document.getElementById("btn-add-fornecedor").addEventListener("click", async ()
   const nif = nifInput.value.trim();
   if (!categoria || !nome) return;
 
-  const resp = await fetch("/api/fornecedores", {
+  const resp = await fetch("api/fornecedores", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ categoria, nome, nif }),
@@ -148,7 +148,7 @@ document.getElementById("btn-add-fornecedor").addEventListener("click", async ()
 // ---------------------------------------------------------------------
 
 async function carregarFormasPagamento() {
-  const resp = await fetch("/api/formas_pagamento");
+  const resp = await fetch("api/formas_pagamento");
   const dados = await resp.json();
   const formas = dados.formas_pagamento || [];
 
@@ -165,7 +165,7 @@ document.getElementById("btn-add-forma").addEventListener("click", async () => {
   const input = document.getElementById("input-nova-forma");
   const nome = input.value.trim();
   if (!nome) return;
-  const resp = await fetch("/api/formas_pagamento", {
+  const resp = await fetch("api/formas_pagamento", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ nome }),
@@ -197,7 +197,7 @@ document.getElementById("form-despesa").addEventListener("submit", async (ev) =>
     return;
   }
 
-  const resp = await fetch("/api/despesa", {
+  const resp = await fetch("api/despesa", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ categoria, fornecedor, valor, forma_pagamento }),
