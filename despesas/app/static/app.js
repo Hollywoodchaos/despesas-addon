@@ -1,274 +1,315 @@
-// app.js — interface do addon Despesas
-// Sem frameworks: JS simples, para o addon ficar leve e sem dependências
-// externas (nada de CDN, tudo local).
+// Iris Despesas - interface (nucleo comum Free + Pro)
+// JS simples, sem frameworks nem CDN: tudo local, funciona offline.
+"use strict";
 
-const LINK_PRO = "https://ko-fi.com/SUBSTITUI_PELO_TEU_LINK"; // atualiza quando tiveres a loja pronta
+const Iris = {
+  cfg: { edicao: "free", versao: "", link_pro: "#", pin_exigido: false },
+  tr: {}, trPt: {},
+  idioma: "pt",
+  refrescos: [], // funcoes a correr quando muda o idioma
+};
+window.Iris = Iris;
 
-let TRADUCOES = {};
+const $ = (id) => document.getElementById(id);
+const isPro = () => Iris.cfg.edicao === "pro";
+const t = (k) => (k in Iris.tr ? Iris.tr[k] : (k in Iris.trPt ? Iris.trPt[k] : k));
+const LOCALES = { pt: "pt-PT", en: "en-GB", es: "es-ES", fr: "fr-FR", de: "de-DE", ru: "ru-RU" };
+const eur = (v) => Number(v || 0).toLocaleString(LOCALES[Iris.idioma] || "pt-PT", { style: "currency", currency: "EUR" });
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const dataCurta = (ts) => {
+  const [d, h = ""] = String(ts).split("T");
+  const [a, m, di] = d.split("-");
+  return `${di}/${m}/${a}` + (h ? " " + h.slice(0, 5) : "");
+};
+Object.assign(Iris, { $, t, eur, esc, dataCurta, isPro });
 
-function chaveIdiomaGuardada() {
-  return localStorage.getItem("despesas_idioma") || (navigator.language || "pt").slice(0, 2);
+async function api(caminho, corpo) {
+  const opts = corpo === undefined ? {} : {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(corpo),
+  };
+  const r = await fetch(caminho, opts);
+  let j = {};
+  try { j = await r.json(); } catch (e) { /* ignora */ }
+  j._status = r.status;
+  return j;
 }
+Iris.api = api;
+
+// ---------------------------------------------------------------- idiomas
 
 async function carregarTraducoes(idioma) {
-  const resp = await fetch(`api/traducoes/${idioma}`);
-  TRADUCOES = await resp.json();
+  Iris.idioma = idioma;
+  document.documentElement.lang = idioma;
+  const [pt, tr] = await Promise.all([
+    fetch("api/traducoes/pt").then((r) => r.json()),
+    idioma === "pt" ? null : fetch("api/traducoes/" + idioma).then((r) => r.json()),
+  ]);
+  Iris.trPt = pt;
+  Iris.tr = tr || pt;
   aplicarTraducoes();
 }
 
-function t(chave) {
-  return TRADUCOES[chave] || chave;
+function aplicarTraducoes(raiz) {
+  (raiz || document).querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = t(el.dataset.i18n); });
+  (raiz || document).querySelectorAll("[data-i18n-placeholder]").forEach((el) => { el.placeholder = t(el.dataset.i18nPlaceholder); });
 }
+Iris.aplicarTraducoes = aplicarTraducoes;
 
-function aplicarTraducoes() {
-  document.querySelectorAll("[data-i18n]").forEach((el) => {
-    el.textContent = t(el.getAttribute("data-i18n"));
-  });
-  document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
-    el.setAttribute("placeholder", t(el.getAttribute("data-i18n-placeholder")));
-  });
-  document.title = t("app_title");
-}
+// ---------------------------------------------------------------- UI base
 
 function mostrarMensagem(texto, tipo) {
-  const el = document.getElementById("mensagem");
+  const el = $("mensagem");
   el.textContent = texto;
-  el.className = "mensagem " + (tipo === "erro" ? "erro" : "sucesso");
+  el.className = "mensagem " + tipo;
   el.style.display = "block";
-  clearTimeout(mostrarMensagem._timeout);
-  mostrarMensagem._timeout = setTimeout(() => { el.style.display = "none"; }, 5000);
+  clearTimeout(mostrarMensagem._t);
+  mostrarMensagem._t = setTimeout(() => { el.style.display = "none"; }, 6000);
+  el.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
+Iris.mensagem = mostrarMensagem;
 
-// ---------------------------------------------------------------------
-// Navegação por separadores
-// ---------------------------------------------------------------------
+function irParaTab(nome) {
+  document.querySelectorAll(".tab-btn").forEach((b) => b.classList.toggle("active", b.dataset.tab === nome));
+  document.querySelectorAll(".tab-content").forEach((s) => s.classList.toggle("active", s.id === "tab-" + nome));
+  const ev = new CustomEvent("iris-tab", { detail: nome });
+  document.dispatchEvent(ev);
+}
+Iris.irParaTab = irParaTab;
 
 function configurarTabs() {
-  document.querySelectorAll(".tab-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
-      document.querySelectorAll(".tab-content").forEach((s) => s.classList.remove("active"));
-      btn.classList.add("active");
-      document.getElementById(`tab-${btn.dataset.tab}`).classList.add("active");
-    });
-  });
+  document.querySelectorAll(".tab-btn").forEach((b) => b.addEventListener("click", () => irParaTab(b.dataset.tab)));
+  document.querySelectorAll(".link-pro").forEach((a) => { a.href = Iris.cfg.link_pro; });
 }
 
-// ---------------------------------------------------------------------
-// Categorias
-// ---------------------------------------------------------------------
+// Modal simples (usado pelo Pro para editar/eliminar)
+Iris.modal = {
+  abrir(html) { $("modal").innerHTML = html; aplicarTraducoes($("modal")); $("modal-bg").classList.add("ver"); },
+  fechar() { $("modal-bg").classList.remove("ver"); $("modal").innerHTML = ""; },
+};
+
+// ---------------------------------------------------------------- registos
+
+function renderRegisto(r, acoes) {
+  const li = document.createElement("li");
+  li.className = "reg";
+  const doc = r.numero_documento ? `<span class="tag">#${esc(r.numero_documento)}</span>` : "";
+  li.innerHTML = `
+    <div class="l1"><span class="forn">${esc(r.fornecedor)}</span><span class="val">${eur(r.valor)}</span></div>
+    <div class="l2"><span>${dataCurta(r.timestamp)}</span><span class="cat">${esc(r.categoria)}</span><span>${esc(r.forma_pagamento)}</span>${doc}</div>`;
+  if (acoes) {
+    const box = document.createElement("div");
+    box.className = "acoes";
+    acoes.forEach((a) => {
+      const b = document.createElement("button");
+      b.className = "mini " + (a.cls || "");
+      b.textContent = a.texto;
+      b.addEventListener("click", () => a.fn(r));
+      box.appendChild(b);
+    });
+    li.appendChild(box);
+  }
+  return li;
+}
+Iris.renderRegisto = renderRegisto;
+
+async function carregarUltimos() {
+  const j = await api("api/ultimos_registos" + (isPro() ? "?limite=8" : ""));
+  const ul = $("lista-ultimos-ul");
+  ul.innerHTML = "";
+  const lista = j.historico || [];
+  if (!lista.length) { ul.innerHTML = `<li class="vazio" style="justify-content:center">${esc(t("lista_vazia"))}</li>`; return; }
+  lista.forEach((r) => ul.appendChild(renderRegisto(r)));
+}
+
+async function carregarTotais() {
+  if (isPro()) {
+    const j = await api("api/totais");
+    ["hoje", "semana", "mes", "ano"].forEach((k) => { $("tot-" + k).textContent = eur(j[k]); });
+  } else {
+    const j = await api("api/total_mes");
+    $("tot-mes").textContent = eur(j.mes);
+  }
+}
+
+// ---------------------------------------------------------------- listas
 
 async function carregarCategorias() {
-  const resp = await fetch("api/categorias");
-  const dados = await resp.json();
-  const categorias = dados.categorias || [];
-
-  const datalist = document.getElementById("lista-categorias-datalist");
-  datalist.innerHTML = categorias.map((c) => `<option value="${escapeHtml(c)}">`).join("");
-
-  const selectForn = document.getElementById("select-categoria-fornecedores");
-  const categoriaAtual = selectForn.value;
-  selectForn.innerHTML = categorias.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
-  if (categorias.includes(categoriaAtual)) selectForn.value = categoriaAtual;
-
-  const ul = document.getElementById("lista-categorias-ul");
-  ul.innerHTML = categorias.length
-    ? categorias.map((c) => `<li>${escapeHtml(c)}</li>`).join("")
-    : `<li>${t("lista_vazia")}</li>`;
-
-  return categorias;
+  const j = await api("api/categorias");
+  const cats = j.categorias || [];
+  Iris.categorias = cats;
+  $("lista-categorias-datalist").innerHTML = cats.map((c) => `<option value="${esc(c)}">`).join("");
+  const sel = $("select-categoria-fornecedores");
+  const atual = sel.value;
+  sel.innerHTML = cats.map((c) => `<option>${esc(c)}</option>`).join("");
+  if (atual && cats.includes(atual)) sel.value = atual;
+  const ul = $("lista-categorias-ul");
+  ul.innerHTML = "";
+  cats.forEach((c) => {
+    const li = document.createElement("li");
+    li.innerHTML = `<span>${esc(c)}</span>`;
+    if (isPro() && Iris.pro) {
+      const b = document.createElement("button");
+      b.className = "mini"; b.textContent = "✏️ " + t("btn_editar");
+      b.addEventListener("click", () => Iris.pro.editarCategoria(c));
+      li.appendChild(b);
+    }
+    ul.appendChild(li);
+  });
+  if (isPro() && Iris.pro && Iris.pro.categoriasMudaram) Iris.pro.categoriasMudaram(cats);
 }
 
-document.getElementById("btn-add-categoria").addEventListener("click", async () => {
-  const input = document.getElementById("input-nova-categoria");
-  const nome = input.value.trim();
-  if (!nome) return;
-  const resp = await fetch("api/categorias", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ nome }),
+async function carregarFormas() {
+  const j = await api("api/formas_pagamento");
+  const formas = j.formas_pagamento || [];
+  const sel = $("input-forma-pagamento");
+  const atual = sel.value;
+  sel.innerHTML = formas.map((f) => `<option>${esc(f)}</option>`).join("");
+  if (atual && formas.includes(atual)) sel.value = atual;
+  Iris.formas = formas;
+  const ul = $("lista-formas-ul");
+  ul.innerHTML = "";
+  formas.forEach((f) => {
+    const li = document.createElement("li");
+    li.innerHTML = `<span>${esc(f)}</span>`;
+    if (isPro() && Iris.pro) {
+      const b = document.createElement("button");
+      b.className = "mini del"; b.textContent = "🗑";
+      b.addEventListener("click", () => Iris.pro.eliminarForma(f));
+      li.appendChild(b);
+    }
+    ul.appendChild(li);
   });
-  const dados = await resp.json();
-  if (dados.ok) {
-    input.value = "";
-    mostrarMensagem(t("msg_categoria_criada"), "sucesso");
-    await carregarCategorias();
-    await carregarFornecedoresDaCategoria();
-  } else {
-    const jaExiste = (dados.erro || "").includes("já existe");
-    mostrarMensagem(jaExiste ? t("msg_categoria_existe") : t("msg_erro_generico"), "erro");
-  }
-});
-
-// ---------------------------------------------------------------------
-// Fornecedores
-// ---------------------------------------------------------------------
+}
 
 async function carregarFornecedoresDaCategoria() {
-  const categoria = document.getElementById("select-categoria-fornecedores").value;
-  if (!categoria) return;
-  const resp = await fetch(`api/fornecedores?categoria=${encodeURIComponent(categoria)}`);
-  const dados = await resp.json();
-  const fornecedores = dados.fornecedores || [];
-
-  const ul = document.getElementById("lista-fornecedores-ul");
-  ul.innerHTML = fornecedores.length
-    ? fornecedores.map((f) => `<li>${escapeHtml(f)}</li>`).join("")
-    : `<li>${t("lista_vazia")}</li>`;
+  const cat = $("select-categoria-fornecedores").value;
+  const ul = $("lista-fornecedores-ul");
+  ul.innerHTML = "";
+  if (!cat) return;
+  const j = await api("api/fornecedores?categoria=" + encodeURIComponent(cat));
+  const det = j.detalhe || [];
+  if (!det.length) { ul.innerHTML = `<li class="vazio" style="justify-content:center">${esc(t("lista_vazia"))}</li>`; return; }
+  det.forEach((f) => {
+    const li = document.createElement("li");
+    li.innerHTML = `<span>${esc(f.nome)} ${f.nif ? `<span class="nif">· NIF ${esc(f.nif)}</span>` : ""}</span>`;
+    if (isPro() && Iris.pro) {
+      const b = document.createElement("button");
+      b.className = "mini"; b.textContent = "✏️ " + t("btn_editar");
+      b.addEventListener("click", () => Iris.pro.editarFornecedor(cat, f));
+      li.appendChild(b);
+    }
+    ul.appendChild(li);
+  });
 }
 
-document.getElementById("select-categoria-fornecedores").addEventListener("change", carregarFornecedoresDaCategoria);
-
-document.getElementById("btn-add-fornecedor").addEventListener("click", async () => {
-  const categoria = document.getElementById("select-categoria-fornecedores").value;
-  const nomeInput = document.getElementById("input-novo-fornecedor");
-  const nifInput = document.getElementById("input-novo-fornecedor-nif");
-  const nome = nomeInput.value.trim();
-  const nif = nifInput.value.trim();
-  if (!categoria || !nome) return;
-
-  const resp = await fetch("api/fornecedores", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ categoria, nome, nif }),
-  });
-  const dados = await resp.json();
-  if (dados.ok) {
-    nomeInput.value = "";
-    nifInput.value = "";
-    mostrarMensagem(t("msg_fornecedor_criado"), "sucesso");
-    await carregarFornecedoresDaCategoria();
-  } else {
-    mostrarMensagem(t("msg_erro_generico"), "erro");
-  }
-});
-
-// ---------------------------------------------------------------------
-// Formas de pagamento
-// ---------------------------------------------------------------------
-
-async function carregarFormasPagamento() {
-  const resp = await fetch("api/formas_pagamento");
-  const dados = await resp.json();
-  const formas = dados.formas_pagamento || [];
-
-  const select = document.getElementById("input-forma-pagamento");
-  select.innerHTML = formas.map((f) => `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join("");
-
-  const ul = document.getElementById("lista-formas-ul");
-  ul.innerHTML = formas.length
-    ? formas.map((f) => `<li>${escapeHtml(f)}</li>`).join("")
-    : `<li>${t("lista_vazia")}</li>`;
+async function sugerirFornecedores() {
+  const cat = $("input-categoria").value.trim();
+  const dl = $("lista-fornecedores-datalist");
+  if (!cat) { dl.innerHTML = ""; return; }
+  const j = await api("api/fornecedores?categoria=" + encodeURIComponent(cat));
+  dl.innerHTML = (j.fornecedores || []).map((f) => `<option value="${esc(f)}">`).join("");
 }
 
-document.getElementById("btn-add-forma").addEventListener("click", async () => {
-  const input = document.getElementById("input-nova-forma");
-  const nome = input.value.trim();
-  if (!nome) return;
-  const resp = await fetch("api/formas_pagamento", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ nome }),
-  });
-  const dados = await resp.json();
-  if (dados.ok) {
-    input.value = "";
-    mostrarMensagem(t("msg_forma_criada"), "sucesso");
-    await carregarFormasPagamento();
-  } else {
-    const jaExiste = (dados.erro || "").includes("já existe");
-    mostrarMensagem(jaExiste ? t("msg_forma_existe") : t("msg_erro_generico"), "erro");
-  }
-});
+Iris.recarregar = async function () {
+  await carregarCategorias();
+  await carregarFormas();
+  await carregarFornecedoresDaCategoria();
+  await carregarUltimos();
+  await carregarTotais();
+};
 
-async function carregarUltimosRegistos() {
-  const resp = await fetch("api/ultimos_registos");
-  const dados = await resp.json();
-  const registos = dados.historico || [];
+// ---------------------------------------------------------------- ações
 
-  const ul = document.getElementById("lista-ultimos-ul");
-  ul.innerHTML = registos.length
-    ? registos.map((r) => {
-        const data = (r.timestamp || "").replace("T", " ").slice(0, 16);
-        const valor = Number(r.valor).toFixed(2).replace(".", ",");
-        return `<li>${escapeHtml(data)} — ${escapeHtml(r.categoria)} — ${escapeHtml(r.fornecedor)} — ${valor} € — ${escapeHtml(r.forma_pagamento)}</li>`;
-      }).join("")
-    : `<li>${t("lista_vazia")}</li>`;
-}
+function ligarAcoes() {
+  $("select-categoria-fornecedores").addEventListener("change", carregarFornecedoresDaCategoria);
+  $("input-categoria").addEventListener("change", sugerirFornecedores);
+  $("input-categoria").addEventListener("input", sugerirFornecedores);
 
-// ---------------------------------------------------------------------
-// Registar despesa
-// ---------------------------------------------------------------------
-
-document.getElementById("form-despesa").addEventListener("submit", async (ev) => {
-  ev.preventDefault();
-  const categoria = document.getElementById("input-categoria").value.trim();
-  const fornecedor = document.getElementById("input-fornecedor").value.trim();
-  const valor = document.getElementById("input-valor").value;
-  const forma_pagamento = document.getElementById("input-forma-pagamento").value;
-
-  if (!categoria || !fornecedor || !valor || !forma_pagamento) {
-    mostrarMensagem(t("msg_campos_obrigatorios"), "erro");
-    return;
-  }
-
-  const resp = await fetch("api/despesa", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ categoria, fornecedor, valor, forma_pagamento }),
-  });
-  const dados = await resp.json();
-
-  if (dados.ok) {
-    mostrarMensagem(t("msg_sucesso_despesa"), "sucesso");
-    document.getElementById("input-categoria").value = "";
-    document.getElementById("input-fornecedor").value = "";
-    document.getElementById("input-valor").value = "";
+  $("btn-add-categoria").addEventListener("click", async () => {
+    const nome = $("input-nova-categoria").value.trim();
+    if (!nome) return;
+    const j = await api("api/categorias", { nome });
+    if (j.ok) { $("input-nova-categoria").value = ""; } else { alert(t("msg_categoria_existe")); }
     await carregarCategorias();
-    await carregarUltimosRegistos();
-  } else if (dados.duplicado) {
-    mostrarMensagem(t("msg_duplicado"), "erro");
-  } else {
-    mostrarMensagem(t("msg_erro_generico"), "erro");
+  });
+
+  $("btn-add-fornecedor").addEventListener("click", async () => {
+    const categoria = $("select-categoria-fornecedores").value;
+    const nome = $("input-novo-fornecedor").value.trim();
+    const nif = $("input-novo-fornecedor-nif").value.trim();
+    if (!categoria || !nome) return;
+    await api("api/fornecedores", { categoria, nome, nif });
+    $("input-novo-fornecedor").value = "";
+    $("input-novo-fornecedor-nif").value = "";
+    await carregarFornecedoresDaCategoria();
+  });
+
+  $("btn-add-forma").addEventListener("click", async () => {
+    const nome = $("input-nova-forma").value.trim();
+    if (!nome) return;
+    const j = await api("api/formas_pagamento", { nome });
+    if (j.ok) { $("input-nova-forma").value = ""; } else { alert(t("msg_forma_existe")); }
+    await carregarFormas();
+  });
+
+  let ultimoCorpo = null;
+  async function registar(forcar) {
+    const categoria = $("input-categoria").value.trim();
+    const fornecedor = $("input-fornecedor").value.trim();
+    const valor = $("input-valor").value;
+    const forma_pagamento = $("input-forma-pagamento").value;
+    if (!forcar && (!categoria || !fornecedor || !valor || !forma_pagamento)) {
+      mostrarMensagem(t("msg_campos_obrigatorios"), "erro");
+      return;
+    }
+    const corpo = forcar ? ultimoCorpo : { categoria, fornecedor, valor, forma_pagamento };
+    if (!forcar && $("input-data") && $("input-data").value) corpo.data = $("input-data").value;
+    ultimoCorpo = Object.assign({}, corpo);
+    if (forcar) corpo.forcar = true;
+    const j = await api("api/despesa", corpo);
+    $("btn-forcar").style.display = "none";
+    if (j.ok) {
+      mostrarMensagem(t("msg_sucesso_despesa"), "sucesso");
+      $("input-categoria").value = ""; $("input-fornecedor").value = ""; $("input-valor").value = "";
+      await Iris.recarregar();
+    } else if (j.duplicado) {
+      mostrarMensagem(t("msg_duplicado"), "erro");
+      if (j.duplicado_tipo === "heuristica") $("btn-forcar").style.display = "block";
+    } else {
+      mostrarMensagem(t("msg_erro_generico"), "erro");
+    }
   }
-});
-
-// ---------------------------------------------------------------------
-// Utilitários
-// ---------------------------------------------------------------------
-
-function escapeHtml(texto) {
-  const div = document.createElement("div");
-  div.textContent = texto;
-  return div.innerHTML;
+  $("form-despesa").addEventListener("submit", (ev) => { ev.preventDefault(); registar(false); });
+  $("btn-forcar").addEventListener("click", () => registar(true));
 }
 
-// ---------------------------------------------------------------------
-// Arranque
-// ---------------------------------------------------------------------
+// ---------------------------------------------------------------- arranque
 
 async function iniciar() {
-  const idioma = chaveIdiomaGuardada();
-  document.getElementById("seletor-idioma").value = idioma;
+  Iris.cfg = await api("api/config");
+  $("ver").textContent = Iris.cfg.versao;
+  let idioma = null;
+  try { idioma = localStorage.getItem("despesas_idioma"); } catch (e) { /* ignora */ }
+  idioma = idioma || Iris.cfg.idioma || "pt";
+  $("seletor-idioma").value = idioma;
   await carregarTraducoes(idioma);
 
-  document.getElementById("seletor-idioma").addEventListener("change", async (ev) => {
-    const novoIdioma = ev.target.value;
-    localStorage.setItem("despesas_idioma", novoIdioma);
-    await carregarTraducoes(novoIdioma);
-    await carregarCategorias();
-    await carregarFormasPagamento();
-    await carregarFornecedoresDaCategoria();
-    await carregarUltimosRegistos();
+  $("seletor-idioma").addEventListener("change", async (ev) => {
+    try { localStorage.setItem("despesas_idioma", ev.target.value); } catch (e) { /* ignora */ }
+    await carregarTraducoes(ev.target.value);
+    await Iris.recarregar();
+    Iris.refrescos.forEach((fn) => fn());
   });
 
-  document.getElementById("link-pro-cta").href = LINK_PRO;
-
   configurarTabs();
-  await carregarCategorias();
-  await carregarFormasPagamento();
-  await carregarFornecedoresDaCategoria();
-  await carregarUltimosRegistos();
+  ligarAcoes();
+  if (isPro() && Iris.initPro) Iris.initPro();
+  if ($("input-data")) {
+    const d = new Date();
+    $("input-data").value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
+  await Iris.recarregar();
+  document.dispatchEvent(new CustomEvent("iris-pronto"));
 }
 
 iniciar();

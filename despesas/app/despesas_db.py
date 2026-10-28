@@ -28,7 +28,7 @@ DB_PATH = os.environ.get("DESPESAS_DB_PATH", os.path.join(os.path.dirname(__file
 CATEGORIAS_PADRAO = [
     "Supermercados", "Farmácias", "Combustível", "Serviços", "Médicos",
     "Vestuário", "Restaurantes", "Despesas Correntes", "Jogos de Azar",
-    "Animais", "Manutenções", "Futilidades",
+    "Animais", "Manutenções", "Futilidades", "Saúde", "Reparações Auto",
 ]
 
 FORMAS_PAGAMENTO_PADRAO = ["Numerário", "Multibanco", "MB WAY", "Débito Direto"]
@@ -80,7 +80,6 @@ def init_db():
         con.execute("INSERT OR IGNORE INTO formas_pagamento (nome) VALUES (?)", (nome,))
     con.commit()
     con.close()
-    print(json.dumps({"ok": True, "mensagem": "Base de dados inicializada"}))
     print(json.dumps({"ok": True, "mensagem": "Base de dados inicializada"}))
 
 

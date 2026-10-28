@@ -1,43 +1,50 @@
 #!/usr/bin/env python3
 """
-main.py — Servidor web do addon "Despesas" para Home Assistant.
+Iris Despesas - servidor web do addon para Home Assistant.
 
-Reaproveita o despesas_db.py tal como está (todas as funções imprimem
-JSON, não fazem "return") — por isso aqui capturamos essa saída em vez
-de reescrever a lógica de base de dados, para não arriscar introduzir
-bugs numa lógica já testada e em uso.
+A mesma base serve as duas edicoes:
+  * Free: so este ficheiro (registo, categorias, fornecedores, pagamentos)
+  * Pro : este ficheiro + pro_routes.py (QR, historico, edicao, analise, IRS...)
 
-A base de dados vive em /data/despesas.db — a pasta /data é fornecida
-automaticamente pelo Supervisor do Home Assistant a cada addon, de forma
-persistente e isolada, sem precisar de nenhuma configuração adicional.
+A base de dados vive em /data/despesas.db (pasta persistente do addon).
 """
 import io
 import os
 import json
 import contextlib
 
-# A base de dados fica dentro da pasta persistente do próprio addon.
 os.environ.setdefault("DESPESAS_DB_PATH", "/data/despesas.db")
 
-import despesas_db as db  # noqa: E402  (tem de vir depois de definir a env var)
+import despesas_db as db  # noqa: E402
 
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory  # noqa: E402
+
+VERSAO = "2.0.0"
+LINK_PRO = "https://ko-fi.com/hollywoodchaos/shop"
+LIMITE_GRATIS = 15
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
-
 IDIOMAS_SUPORTADOS = ["pt", "en", "es", "fr", "de", "ru"]
 
 
+def carregar_opcoes():
+    """Opcoes do addon: o Supervisor grava-as em /data/options.json."""
+    try:
+        with open(os.environ.get("DESPESAS_OPTIONS", "/data/options.json"), "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+
+OPCOES = carregar_opcoes()
+
+
 def chamar(fn, *args, **kwargs):
-    """Corre uma função do despesas_db.py, captura o JSON que ela imprime
-    e devolve-o como dict Python. Ignora linhas vazias/lixo, usa a última
-    linha que for JSON válido (protege contra o print() duplicado que
-    existe em init_db, e contra qualquer aviso acidental que apareça)."""
+    """Corre uma funcao do despesas_db.py (que imprime JSON) e devolve o dict."""
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
         fn(*args, **kwargs)
-    saida = buf.getvalue().strip()
-    for linha in reversed(saida.splitlines()):
+    for linha in reversed(buf.getvalue().strip().splitlines()):
         linha = linha.strip()
         if not linha:
             continue
@@ -49,16 +56,19 @@ def chamar(fn, *args, **kwargs):
 
 
 def garantir_base_dados():
-    if not os.path.exists(os.environ["DESPESAS_DB_PATH"]):
-        chamar(db.init_db)
-    else:
-        # corre sempre o init (é idempotente — usa "IF NOT EXISTS"/"INSERT OR
-        # IGNORE") para aplicar migrações novas em bases de dados antigas
-        chamar(db.init_db)
+    chamar(db.init_db)  # idempotente: aplica migracoes em bases antigas
+
+
+try:
+    import pro_routes  # so existe na edicao Pro
+    EDICAO = "pro"
+except ImportError:
+    pro_routes = None
+    EDICAO = "free"
 
 
 # ---------------------------------------------------------------------
-# Idioma / interface
+# Interface
 # ---------------------------------------------------------------------
 
 @app.route("/")
@@ -66,22 +76,25 @@ def index():
     return send_from_directory(app.template_folder, "index.html")
 
 
-@app.route("/api/idiomas")
-def api_idiomas():
-    return jsonify({"suportados": IDIOMAS_SUPORTADOS})
+@app.route("/api/config")
+def api_config():
+    return jsonify({
+        "edicao": EDICAO, "versao": VERSAO, "link_pro": LINK_PRO,
+        "idioma": OPCOES.get("idioma", "pt"),
+        "pin_exigido": bool(str(OPCOES.get("pin_administrador", "") or "").strip()),
+    })
 
 
 @app.route("/api/traducoes/<idioma>")
 def api_traducoes(idioma):
     if idioma not in IDIOMAS_SUPORTADOS:
         idioma = "pt"
-    caminho = os.path.join(app.root_path, "translations", f"{idioma}.json")
-    with open(caminho, "r", encoding="utf-8") as f:
+    with open(os.path.join(app.root_path, "translations", f"{idioma}.json"), "r", encoding="utf-8") as f:
         return jsonify(json.load(f))
 
 
 # ---------------------------------------------------------------------
-# Funcionalidades GRÁTIS
+# Funcionalidades comuns (Free e Pro)
 # ---------------------------------------------------------------------
 
 @app.route("/api/categorias", methods=["GET"])
@@ -91,8 +104,7 @@ def api_listar_categorias():
 
 @app.route("/api/categorias", methods=["POST"])
 def api_add_categoria():
-    dados = request.get_json(force=True) or {}
-    nome = (dados.get("nome") or "").strip()
+    nome = ((request.get_json(force=True) or {}).get("nome") or "").strip()
     if not nome:
         return jsonify({"ok": False, "erro": "nome em falta"}), 400
     return jsonify(chamar(db.add_categoria, nome))
@@ -103,17 +115,22 @@ def api_listar_fornecedores():
     categoria = request.args.get("categoria", "")
     if not categoria:
         return jsonify({"ok": False, "erro": "categoria em falta"}), 400
-    return jsonify(chamar(db.listar_fornecedores, categoria))
+    con = db.conectar()
+    rows = con.execute("""SELECT f.nome, f.nif FROM fornecedores f
+        JOIN categorias c ON c.id = f.categoria_id WHERE c.nome = ? ORDER BY f.nome""", (categoria,)).fetchall()
+    con.close()
+    return jsonify({"categoria": categoria, "fornecedores": [r["nome"] for r in rows],
+                    "detalhe": [{"nome": r["nome"], "nif": r["nif"] or ""} for r in rows]})
 
 
 @app.route("/api/fornecedores", methods=["POST"])
 def api_add_fornecedor():
-    dados = request.get_json(force=True) or {}
-    categoria = (dados.get("categoria") or "").strip()
-    nome = (dados.get("nome") or "").strip()
-    nif = (dados.get("nif") or "").strip() or None
+    d = request.get_json(force=True) or {}
+    categoria = (d.get("categoria") or "").strip()
+    nome = (d.get("nome") or "").strip()
+    nif = (d.get("nif") or "").strip() or None
     if not categoria or not nome:
-        return jsonify({"ok": False, "erro": "categoria e nome são obrigatórios"}), 400
+        return jsonify({"ok": False, "erro": "categoria e nome sao obrigatorios"}), 400
     return jsonify(chamar(db.add_fornecedor, categoria, nome, nif))
 
 
@@ -124,8 +141,7 @@ def api_listar_formas_pagamento():
 
 @app.route("/api/formas_pagamento", methods=["POST"])
 def api_add_forma_pagamento():
-    dados = request.get_json(force=True) or {}
-    nome = (dados.get("nome") or "").strip()
+    nome = ((request.get_json(force=True) or {}).get("nome") or "").strip()
     if not nome:
         return jsonify({"ok": False, "erro": "nome em falta"}), 400
     return jsonify(chamar(db.add_forma_pagamento, nome))
@@ -133,66 +149,72 @@ def api_add_forma_pagamento():
 
 @app.route("/api/despesa", methods=["POST"])
 def api_add_despesa():
-    """Registo manual de uma despesa (funcionalidade grátis). A leitura
-    automática por QR code e a deteção de duplicado por documento ficam
-    reservadas à versão Pro — aqui aceitamos apenas o registo direto,
-    com a deteção de duplicado simples (mesmo fornecedor+valor+dia)."""
-    dados = request.get_json(force=True) or {}
-    categoria = (dados.get("categoria") or "").strip()
-    fornecedor = (dados.get("fornecedor") or "").strip()
-    valor = dados.get("valor")
-    forma_pagamento = (dados.get("forma_pagamento") or "").strip()
-
-    if not categoria or not fornecedor or not forma_pagamento or valor in (None, ""):
+    """Registo de uma despesa. Na edicao Pro aceita tambem data e numero de
+    documento (vindos da leitura do QR da fatura)."""
+    d = request.get_json(force=True) or {}
+    categoria = (d.get("categoria") or "").strip()
+    fornecedor = (d.get("fornecedor") or "").strip()
+    forma = (d.get("forma_pagamento") or "").strip()
+    valor = d.get("valor")
+    if not categoria or not fornecedor or not forma or valor in (None, ""):
         return jsonify({"ok": False, "erro": "campos_obrigatorios"}), 400
-
     try:
         valor = float(str(valor).replace(",", "."))
     except ValueError:
         return jsonify({"ok": False, "erro": "valor_invalido"}), 400
-
-    forcar = "1" if dados.get("forcar") else "0"
-    return jsonify(chamar(db.add_despesa, categoria, fornecedor, valor, forma_pagamento, None, forcar, ""))
+    data = numero = ""
+    nif = None
+    if EDICAO == "pro":
+        data = (d.get("data") or "").strip() or None
+        numero = (d.get("numero_documento") or "").strip()
+        nif = (d.get("nif") or "").strip() or None
+        if nif:
+            chamar(db.add_fornecedor, categoria, fornecedor, nif)
+    forcar = "1" if d.get("forcar") else "0"
+    return jsonify(chamar(db.add_despesa, categoria, fornecedor, valor, forma, data or None, forcar, numero))
 
 
 @app.route("/api/ultimos_registos", methods=["GET"])
 def api_ultimos_registos():
-    """Versão grátis e "arcaica" do histórico: só os últimos registos,
-    sem pesquisa, sem edição/eliminação, sem filtros por data. A versão
-    Pro acrescenta pesquisa completa, edição e eliminação em cima disto
-    através de /api/historico e /api/pesquisar."""
-    LIMITE_GRATIS = 15
-    return jsonify(chamar(db.historico, LIMITE_GRATIS))
+    """Ultimos registos (a edicao Free mostra os ultimos 15, sem pesquisa)."""
+    limite = LIMITE_GRATIS
+    if EDICAO == "pro":
+        try:
+            limite = max(1, min(int(request.args.get("limite", 10)), 200))
+        except ValueError:
+            limite = 10
+    r = chamar(db.historico, limite)
+    return jsonify(r)
+
+
+@app.route("/api/total_mes")
+def api_total_mes():
+    t = chamar(db.totais)
+    return jsonify({"mes": t.get("mes", 0)})
 
 
 # ---------------------------------------------------------------------
-# Funcionalidades PRO (bloqueadas nesta versão gratuita)
+# Funcionalidades Pro
 # ---------------------------------------------------------------------
 
-ENDPOINTS_PRO = [
-    "interpretar_qr", "totais", "totais_por_categoria", "pesquisar",
-    "historico", "editar_despesa", "eliminar_despesa", "editar_categoria",
-    "editar_fornecedor", "eliminar_forma_pagamento", "exportar_csv",
-]
+if pro_routes:
+    pro_routes.registar(app, db, chamar, OPCOES)
+else:
+    ENDPOINTS_PRO = [
+        "totais", "totais_por_categoria", "totais_mensais", "historico", "pesquisar",
+        "interpretar_qr", "editar_despesa", "eliminar_despesa", "editar_categoria",
+        "editar_fornecedor", "eliminar_forma_pagamento", "exportar_csv", "irs",
+    ]
 
+    def _pro_bloqueado():
+        return jsonify({"ok": False, "erro": "pro_only",
+                        "mensagem": "Disponivel apenas na versao Pro."}), 402
 
-def _resposta_pro_bloqueado():
-    return jsonify({
-        "ok": False,
-        "erro": "pro_only",
-        "mensagem": "Esta funcionalidade está disponível apenas na versão Pro.",
-    }), 402
-
-
-for _nome in ENDPOINTS_PRO:
-    app.add_url_rule(
-        f"/api/{_nome}",
-        endpoint=f"pro_{_nome}",
-        view_func=_resposta_pro_bloqueado,
-        methods=["GET", "POST", "PUT", "DELETE"],
-    )
+    for _nome in ENDPOINTS_PRO:
+        app.add_url_rule(f"/api/{_nome}", endpoint=f"pro_{_nome}", view_func=_pro_bloqueado,
+                         methods=["GET", "POST", "PUT", "DELETE"])
 
 
 if __name__ == "__main__":
     garantir_base_dados()
-    app.run(host="0.0.0.0", port=8099)
+    app.run(host="0.0.0.0", port=int(os.environ.get("DESPESAS_PORT", "8099")))

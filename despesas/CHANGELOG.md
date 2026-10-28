@@ -1,15 +1,15 @@
 # Changelog
 
-## 1.0.1
+## 2.0.0
 
-- Corrige o arranque do addon: o Flask passa a correr como serviço
-  gerido pelo s6-overlay, em vez de ser chamado diretamente — resolve
-  o erro `s6-overlay-suexec: fatal: can only run as pid 1` que
-  impedia o addon de iniciar.
+- Novo visual Iris (tema escuro, dourado e azul), com logótipo.
+- Novo ecrã de apresentação da versão Pro.
+- Total do mês no ecrã principal.
+- Novas categorias por omissão: Saúde e Reparações Auto.
+- Fornecedores mostram o NIF na lista.
+- Registo duplicado (mesmo fornecedor, valor e dia): agora podes escolher «Registar mesmo assim».
+- Mantém os dados das versões 1.x (mesma pasta `/data`).
 
-## 1.0.0
+## 1.x
 
-- Primeira versão pública.
-- Registo de despesas por categoria, fornecedor e forma de pagamento.
-- Gestão de categorias, fornecedores (com NIF) e formas de pagamento.
-- Interface própria via Ingress, em pt/en/es/fr/de/ru.
+- Primeiras versões públicas e correções de arranque.

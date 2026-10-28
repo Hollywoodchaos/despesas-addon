@@ -1,46 +1,28 @@
-# Documentação — Despesas
+# Iris Despesas — Documentação
 
 ## Configuração
-
-O addon tem uma única opção:
 
 ```yaml
 idioma: pt
 ```
 
-Valores possíveis: `pt`, `en`, `es`, `fr`, `de`, `ru`.
+Valores possíveis: `pt`, `en`, `es`, `fr`, `de`, `ru`. Define o idioma inicial sugerido; cada pessoa pode mudar no seletor no canto superior direito (a escolha fica guardada no browser).
 
-Esta opção define apenas o idioma inicial sugerido — cada pessoa que
-usar o addon pode mudar de idioma a qualquer momento no seletor no
-canto superior direito da interface (a escolha fica guardada no
-browser de cada um).
+## Como usar
+
+1. **Registar**: escolhe (ou escreve) a categoria e o fornecedor, indica o valor e a forma de pagamento.
+2. **Categorias / Fornecedores / Pagamentos**: cria os teus próprios. O NIF do fornecedor é opcional.
+3. No ecrã principal vês o total do mês e os últimos 15 registos.
 
 ## Onde ficam os dados
 
-Os dados ficam em `/data/despesas.db`, dentro da pasta persistente
-própria deste addon. Esta pasta é gerida automaticamente pelo
-Supervisor do Home Assistant e não precisa de nenhum mapeamento
-manual — os dados sobrevivem a reinícios, atualizações e mudanças de
-versão do addon.
+`/data/despesas.db`, a pasta persistente própria deste addon. Está incluída nas cópias de segurança do Home Assistant e sobrevive a reinícios e atualizações.
 
-## Funcionalidades incluídas nesta versão (gratuita)
+## Versão Pro
 
-- Registar uma despesa (categoria, fornecedor, valor, forma de
-  pagamento)
-- Criar e consultar categorias
-- Criar e consultar fornecedores, com NIF opcional
-- Criar e consultar formas de pagamento
-
-## Funcionalidades da versão Pro
-
-- Leitura de faturas por câmara (código QR, norma da Autoridade
-  Tributária portuguesa)
-- Gráficos e estatísticas de despesa por categoria (dia/semana/mês/ano)
-- Histórico completo e pesquisa por fornecedor ou NIF
-- Edição e eliminação de registos
-- Exportação para Excel/CSV
+Leitura de faturas por QR code, proteção contra duplicados, gráficos, resumo para o IRS, histórico com pesquisa, edição e eliminação (com PIN opcional) e exportação para Excel/CSV.
+Mais informação: https://ko-fi.com/hollywoodchaos/shop
 
 ## Suporte
 
-Encontraste um problema? Abre uma
-[issue no GitHub](https://github.com/Hollywoodchaos/despesas-addon/issues).
+Encontraste um problema? Abre uma [issue no GitHub](https://github.com/Hollywoodchaos/despesas-addon/issues).
