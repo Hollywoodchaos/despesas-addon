@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.1
+
+- O botão «Versão Pro» aponta agora para a página do produto no Ko-fi.
+
 ## 2.0.0
 
 - Novo visual Iris (tema escuro, dourado e azul), com logótipo.

@@ -89,7 +89,7 @@ The Free edition is a complete, ready-to-use expense tracker. **Iris Despesas Pr
 </table>
 
 <p align="center">
-  <a href="https://ko-fi.com/hollywoodchaos/shop"><img src="https://img.shields.io/badge/Get%20Iris%20Despesas%20Pro-on%20Ko--fi-FF5E5B?logo=ko-fi&logoColor=white&style=for-the-badge" alt="Get Pro on Ko-fi"></a>
+  <a href="https://ko-fi.com/s/fadc8f11ba"><img src="https://img.shields.io/badge/Get%20Iris%20Despesas%20Pro-on%20Ko--fi-FF5E5B?logo=ko-fi&logoColor=white&style=for-the-badge" alt="Get Pro on Ko-fi"></a>
 </p>
 
 > **Launch offer:** Iris Despesas Pro is available at a special launch price on Ko-fi for a limited time. One payment, personal-use license, updates included.
@@ -110,7 +110,7 @@ The Iris logo (dark sphere with blue filaments) and the "Iris Despesas" name wer
 
 ## 🇵🇹 Em português
 
-**Iris Despesas** é um addon do Home Assistant para registares as despesas da casa: categoria → fornecedor → valor → forma de pagamento. Tudo local, sem nuvem e sem contas. A edição **Pro** acrescenta leitura de faturas por QR code, gráficos, resumo para o IRS, histórico com pesquisa, edição/eliminação e exportação para Excel — à venda no [Ko-fi](https://ko-fi.com/hollywoodchaos/shop).
+**Iris Despesas** é um addon do Home Assistant para registares as despesas da casa: categoria → fornecedor → valor → forma de pagamento. Tudo local, sem nuvem e sem contas. A edição **Pro** acrescenta leitura de faturas por QR code, gráficos, resumo para o IRS, histórico com pesquisa, edição/eliminação e exportação para Excel — à venda no [Ko-fi](https://ko-fi.com/s/fadc8f11ba).
 
 ## 📄 License
 

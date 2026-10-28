@@ -21,7 +21,7 @@ Valores possíveis: `pt`, `en`, `es`, `fr`, `de`, `ru`. Define o idioma inicial 
 ## Versão Pro
 
 Leitura de faturas por QR code, proteção contra duplicados, gráficos, resumo para o IRS, histórico com pesquisa, edição e eliminação (com PIN opcional) e exportação para Excel/CSV.
-Mais informação: https://ko-fi.com/hollywoodchaos/shop
+Mais informação: https://ko-fi.com/s/fadc8f11ba
 
 ## Suporte
 
