@@ -1,5 +1,5 @@
 name: "Iris Despesas"
-version: "2.0.1"
+version: "2.0.2"
 slug: "despesas"
 description: "Regista despesas domésticas por categoria, fornecedor e forma de pagamento. 6 idiomas."
 url: "https://github.com/Hollywoodchaos/despesas-addon"
@@ -13,6 +13,8 @@ startup: application
 boot: auto
 ingress: true
 ingress_port: 8099
+ingress_panel: true
+panel_admin: false
 panel_icon: mdi:cash-multiple
 panel_title: "Iris Despesas"
 options:

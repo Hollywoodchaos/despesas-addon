@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.2
+
+- O add-on aparece automaticamente na barra lateral, também para utilizadores não administradores.
+
 ## 2.0.1
 
 - O botão «Versão Pro» aponta agora para a página do produto no Ko-fi.

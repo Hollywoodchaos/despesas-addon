@@ -19,7 +19,7 @@ import despesas_db as db  # noqa: E402
 
 from flask import Flask, request, jsonify, send_from_directory  # noqa: E402
 
-VERSAO = "2.0.1"
+VERSAO = "2.0.2"
 LINK_PRO = "https://ko-fi.com/s/fadc8f11ba"
 LIMITE_GRATIS = 15
 
