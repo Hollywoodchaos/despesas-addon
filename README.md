@@ -38,7 +38,30 @@
 | 🗣️ **6 languages** | Português, English, Español, Français, Deutsch, Русский |
 | 🔒 **Local & private** | SQLite database stored in the add-on's own folder. No cloud, no account |
 
+## ⚡ Quick start (2 minutes)
+
+1. Press the button above (or follow [Installation](#-installation)) to add the repository, then **Install** and **Start** Iris Despesas.
+2. Turn on **Show in sidebar**.
+3. Open **Iris Despesas** from the sidebar and record your first expense.
+
+## 🧭 How to record an expense
+
+1. **Category**: pick one (groceries, pharmacy, fuel…) or create your own.
+2. **Supplier**: pick one saved under that category, or add a new one (the tax ID, NIF, is optional).
+3. **Amount**: type the value.
+4. **Payment method**: cash, card, MB WAY, direct debit, or your own.
+5. Save. The expense appears under **Recent entries** and the **month total** updates.
+
+**Tips**
+- The more you use a supplier, the faster it gets: it is saved under its category.
+- Everybody in the house can use it from their own phone, through the Home Assistant app.
+- Pick your language inside the app; each person can use a different one.
+
 ## 🚀 Installation
+
+<p align="center">
+  <a href="https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FHollywoodchaos%2Fdespesas-addon"><img src="https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg" alt="Add the Iris Despesas repository to your Home Assistant"></a>
+</p>
 
 1. In Home Assistant: **Settings → Add-ons → Add-on Store → ⋮ → Repositories**
 2. Add `https://github.com/Hollywoodchaos/despesas-addon`
@@ -98,6 +121,24 @@ The Free edition is a complete, ready-to-use expense tracker. **Iris Despesas Pr
 
 ---
 
+## 🛠️ Troubleshooting
+
+- **The add-on does not show up in the store**: after adding the repository, open the Add-on Store, press **⋮ → Check for updates** and reload the page.
+- **I installed Pro from the Ko-fi package and it is not listed**: Pro is a *local add-on*. Copy the `despesas_pro` folder to the **addons** share (Samba share add-on), then **⋮ → Check for updates** and look under **Local add-ons**.
+- **The camera does not open (Pro)**: camera access needs a secure HTTPS connection to Home Assistant. Without HTTPS, use the **QR photo** button, which works everywhere.
+- **The entry screen looks old after an update**: refresh the page (Ctrl+F5), or reopen the app.
+- **Where is my data?** In `/data/despesas.db` inside the add-on. It is included in Home Assistant backups, so restoring a backup restores your expenses.
+
+## ❓ Questions
+
+**Is anything sent to the cloud?** No. Everything stays inside your Home Assistant.
+
+**Does it cost anything?** The Free edition is free and open source (MIT). **Pro** is a one-time purchase on Ko-fi.
+
+**Can I run Free and Pro together?** Yes. They are separate add-ons with separate data; Pro starts with an empty database.
+
+**Is it tax or accounting advice?** No. It is a personal expense tracker; check your figures before using them in any tax return.
+
 ## ℹ️ Notes
 
 - Camera scanning in the Pro edition needs a secure (HTTPS) connection to Home Assistant — a browser rule, not an add-on one. Without HTTPS you can still scan by taking a photo of the QR code.
@@ -106,7 +147,7 @@ The Free edition is a complete, ready-to-use expense tracker. **Iris Despesas Pr
 
 ## 🎨 About the logo
 
-The Iris logo (dark sphere with blue filaments) and the "Iris Despesas" name were created for this project with the help of AI tools. The MIT license covers the code; the name and logo are the project's branding, so please don't reuse them for your own products or to imply endorsement.
+The Iris logo (dark sphere with blue filaments) and the "Iris Despesas" name were created for this project with the help of AI tools. The MIT license covers the code; the name and logo are the project's branding, so please don't reuse them for your own products or to imply endorsement. "Iris", "Iris Despesas" and the Iris eye logo are trademarks of Eletro Solar Basto.
 
 ## 🇵🇹 Em português
 
