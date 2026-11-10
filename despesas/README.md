@@ -13,6 +13,8 @@
 
 <p align="center">Category → supplier → amount → payment method. Simple, private and 100% local: your data never leaves your Home Assistant.</p>
 
+<p align="center"><a href="https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FHollywoodchaos%2Fdespesas-addon" target="_blank"><img src="https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg" alt="Add repository to my Home Assistant"></a></p>
+
 ---
 
 ## 📸 Screenshots
@@ -44,10 +46,11 @@
 
 ## 🚀 Installation
 
-1. In Home Assistant: **Settings → Add-ons → Add-on Store → ⋮ → Repositories**
-2. Add `https://github.com/Hollywoodchaos/despesas-addon`
-3. Find **Iris Despesas**, click **Install**, then **Start**
-4. Turn on **Show in sidebar**
+<a href="https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FHollywoodchaos%2Fdespesas-addon" target="_blank"><img src="https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg" alt="Add repository to my Home Assistant"></a>
+
+1. Click the button above and confirm **Add** (or, by hand: **Settings → Add-ons → Add-on Store → ⋮ → Repositories** and add `https://github.com/Hollywoodchaos/despesas-addon`)
+2. Find **Iris Despesas**, click **Install**, then **Start**
+3. Turn on **Show in sidebar**
 
 Updating from the old "Despesas" 1.x? Just update — your data is kept.
 
