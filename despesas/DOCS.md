@@ -14,6 +14,10 @@ Valores possíveis: `pt`, `en`, `es`, `fr`, `de`, `ru`. Define o idioma inicial 
 2. **Categorias / Fornecedores / Pagamentos**: cria os teus próprios. O NIF do fornecedor é opcional.
 3. No ecrã principal vês o total do mês e os últimos 15 registos.
 
+## Manual
+
+Manual completo em [português](MANUAL.pt.md) e [English](MANUAL.en.md).
+
 ## Onde ficam os dados
 
 `/data/despesas.db`, a pasta persistente própria deste addon. Está incluída nas cópias de segurança do Home Assistant e sobrevive a reinícios e atualizações.

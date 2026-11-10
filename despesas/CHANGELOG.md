@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.1.0
+
+- Novo botão «Gerir» em cada fornecedor (separador Gestão): mover para outra categoria, juntar a outro fornecedor (as despesas passam para ele) e eliminar (só se não tiver despesas).
+- Manual do utilizador em português e inglês (MANUAL.pt.md e MANUAL.en.md).
+
 ## 2.0.2
 
 - O add-on aparece automaticamente na barra lateral, também para utilizadores não administradores.

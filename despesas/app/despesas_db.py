@@ -356,6 +356,68 @@ def editar_fornecedor(categoria, nome_atual, novo_nome="", novo_nif=""):
     }, ensure_ascii=False))
 
 
+def _fornecedor(con, categoria, nome):
+    return con.execute(
+        "SELECT f.id, f.nome, f.nif, f.categoria_id FROM fornecedores f "
+        "JOIN categorias c ON c.id = f.categoria_id WHERE c.nome = ? AND f.nome = ?",
+        (categoria, nome)).fetchone()
+
+
+def _erro(codigo, texto, **extra):
+    d = {"ok": False, "erro": texto, "erro_codigo": codigo}
+    d.update(extra)
+    print(json.dumps(d, ensure_ascii=False))
+
+
+def mover_fornecedor(categoria, nome, nova_categoria):
+    """Muda um fornecedor para outra categoria; as despesas dele vao com ele."""
+    con = conectar()
+    f = _fornecedor(con, categoria, nome)
+    if not f:
+        con.close(); return _erro("nao_encontrado", "Fornecedor nao encontrado")
+    c = con.execute("SELECT id FROM categorias WHERE nome = ?", (nova_categoria,)).fetchone()
+    if not c:
+        con.close(); return _erro("categoria_inexistente", "A categoria nao existe")
+    if c["id"] == f["categoria_id"]:
+        con.close(); return _erro("mesma_categoria", "O fornecedor ja esta nessa categoria")
+    if con.execute("SELECT 1 FROM fornecedores WHERE categoria_id = ? AND nome = ?", (c["id"], nome)).fetchone():
+        con.close(); return _erro("ja_existe_destino", "Ja existe um fornecedor com esse nome na categoria de destino")
+    con.execute("UPDATE fornecedores SET categoria_id = ? WHERE id = ?", (c["id"], f["id"]))
+    n = con.execute("UPDATE despesas SET categoria_id = ? WHERE fornecedor_id = ?", (c["id"], f["id"])).rowcount
+    con.commit(); con.close()
+    print(json.dumps({"ok": True, "nome": nome, "de": categoria, "para": nova_categoria, "despesas": n}, ensure_ascii=False))
+
+
+def eliminar_fornecedor(categoria, nome):
+    """Elimina um fornecedor, mas so se nao tiver despesas."""
+    con = conectar()
+    f = _fornecedor(con, categoria, nome)
+    if not f:
+        con.close(); return _erro("nao_encontrado", "Fornecedor nao encontrado")
+    n = con.execute("SELECT COUNT(*) FROM despesas WHERE fornecedor_id = ?", (f["id"],)).fetchone()[0]
+    if n:
+        con.close(); return _erro("tem_despesas", "O fornecedor tem despesas registadas", n=n)
+    con.execute("DELETE FROM fornecedores WHERE id = ?", (f["id"],))
+    con.commit(); con.close()
+    print(json.dumps({"ok": True, "nome": nome, "categoria": categoria}, ensure_ascii=False))
+
+
+def juntar_fornecedor(categoria, nome, destino):
+    """Passa as despesas de 'nome' para 'destino' (mesma categoria) e apaga 'nome'."""
+    con = conectar()
+    if nome == destino:
+        con.close(); return _erro("mesmo_fornecedor", "Escolhe um fornecedor de destino diferente")
+    a, b = _fornecedor(con, categoria, nome), _fornecedor(con, categoria, destino)
+    if not a or not b:
+        con.close(); return _erro("nao_encontrado", "Fornecedor nao encontrado")
+    n = con.execute("UPDATE despesas SET fornecedor_id = ? WHERE fornecedor_id = ?", (b["id"], a["id"])).rowcount
+    if not b["nif"] and a["nif"]:
+        con.execute("UPDATE fornecedores SET nif = ? WHERE id = ?", (a["nif"], b["id"]))
+    con.execute("DELETE FROM fornecedores WHERE id = ?", (a["id"],))
+    con.commit(); con.close()
+    print(json.dumps({"ok": True, "nome": nome, "destino": destino, "categoria": categoria, "despesas": n}, ensure_ascii=False))
+
+
 def editar_despesa(id_despesa, novo_valor="", nova_data="", nova_forma_pagamento=""):
     """Edita o valor, a data e/ou a forma de pagamento de uma despesa ja
     registada — util para corrigir um erro na escolha inicial, sem teres

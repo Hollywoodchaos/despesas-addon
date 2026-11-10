@@ -192,14 +192,72 @@ async function carregarFornecedoresDaCategoria() {
   det.forEach((f) => {
     const li = document.createElement("li");
     li.innerHTML = `<span>${esc(f.nome)} ${f.nif ? `<span class="nif">· NIF ${esc(f.nif)}</span>` : ""}</span>`;
+    const acoes = document.createElement("span");
+    acoes.className = "acoes";
     if (isPro() && Iris.pro) {
       const b = document.createElement("button");
       b.className = "mini"; b.textContent = "✏️ " + t("btn_editar");
       b.addEventListener("click", () => Iris.pro.editarFornecedor(cat, f));
-      li.appendChild(b);
+      acoes.appendChild(b);
     }
+    const g = document.createElement("button");
+    g.className = "mini"; g.textContent = "⚙️ " + t("btn_gerir");
+    g.addEventListener("click", () => gerirFornecedor(cat, f, det.map((x) => x.nome)));
+    acoes.appendChild(g);
+    li.appendChild(acoes);
     ul.appendChild(li);
   });
+}
+
+// Gerir um fornecedor: mover de categoria, juntar a outro, eliminar (Free e Pro).
+function gerirFornecedor(cat, f, nomesDaCategoria) {
+  const modal = Iris.modal;
+  const outrasCats = (Iris.categorias || []).filter((c) => c !== cat);
+  const outros = nomesDaCategoria.filter((n) => n !== f.nome);
+  const opts = (l) => l.map((x) => `<option>${esc(x)}</option>`).join("");
+  const dis = (l) => (l.length ? "" : "disabled");
+  const erroTxt = (j) => {
+    if (j.erro === "pin_incorreto") return t("pin_errado");
+    const k = "err_" + (j.erro_codigo || "");
+    return k in Iris.tr || k in Iris.trPt ? t(k).replace("{x}", f.nome).replace("{n}", j.n || "") : (j.erro || t("msg_erro_generico"));
+  };
+  const mostrarErro = (txt) => { const e = $("m-erro"); if (e) { e.textContent = txt; e.style.display = "block"; } };
+
+  function passo1() {
+    modal.abrir(`<h3>${esc(f.nome)}</h3>
+      <p class="resumo-hist" style="margin:0 0 6px">${esc(cat)}${f.nif ? " · NIF " + esc(f.nif) : ""}</p>
+      <label data-i18n="ger_mover_para">Mover para a categoria</label>
+      <select id="g-cat" ${dis(outrasCats)}>${opts(outrasCats)}</select>
+      <button class="btn-secundario" id="g-mover" style="margin-top:8px" ${dis(outrasCats)} data-i18n="btn_mover">Mover</button>
+      <label data-i18n="ger_juntar_a" style="margin-top:14px">Juntar ao fornecedor</label>
+      <select id="g-dest" ${dis(outros)}>${opts(outros)}</select>
+      <button class="btn-secundario" id="g-juntar" style="margin-top:8px" ${dis(outros)} data-i18n="btn_juntar">Juntar</button>
+      <button class="btn-perigo" id="g-elim" style="margin-top:14px;width:100%" data-i18n="btn_eliminar">Eliminar</button>
+      <div class="linha-btn"><button class="btn-ghost" id="m-cancel" data-i18n="btn_fechar">Fechar</button></div>`);
+    $("m-cancel").onclick = modal.fechar;
+    $("g-mover").onclick = () => { const c = $("g-cat").value; passo2(t("conf_mover").replace("{x}", f.nome).replace("{y}", c), "api/fornecedor/mover", { nova_categoria: c }, t("msg_forn_mover_ok").replace("{x}", f.nome).replace("{y}", c)); };
+    $("g-juntar").onclick = () => { const d = $("g-dest").value; passo2(t("conf_juntar").replace(/\{x\}/g, f.nome).replace(/\{y\}/g, d), "api/fornecedor/juntar", { destino: d }, t("msg_forn_juntar_ok").replace("{x}", f.nome).replace("{y}", d)); };
+    $("g-elim").onclick = () => passo2(t("conf_eliminar_forn").replace("{x}", f.nome), "api/fornecedor/eliminar", {}, t("msg_forn_elim_ok").replace("{x}", f.nome), true);
+  }
+
+  function passo2(texto, rota, extra, okTxt, perigo) {
+    const pinHtml = Iris.cfg.pin_exigido
+      ? `<label data-i18n="pin_lbl">PIN de administrador</label><input id="m-pin" type="password" inputmode="numeric" autocomplete="off">` : "";
+    modal.abrir(`<h3 data-i18n="ger_confirmar">Confirmar</h3><p style="line-height:1.5;margin:8px 0">${esc(texto)}</p>${pinHtml}
+      <div id="m-erro" class="mensagem erro" style="display:none;margin-top:12px"></div>
+      <div class="linha-btn"><button class="btn-ghost" id="m-voltar" data-i18n="btn_cancelar">Cancelar</button>
+      <button class="${perigo ? "btn-perigo" : "btn-primario"}" id="m-ok" data-i18n="btn_confirmar">Confirmar</button></div>`);
+    $("m-voltar").onclick = passo1;
+    $("m-ok").onclick = async () => {
+      const j = await api(rota, Object.assign({ categoria: cat, nome: f.nome, pin: $("m-pin") ? $("m-pin").value : "" }, extra));
+      if (!j.ok) { mostrarErro(erroTxt(j)); return; }
+      await Iris.recarregar();
+      modal.abrir(`<h3>✅</h3><p style="line-height:1.5;margin:8px 0">${esc(okTxt)}</p>
+        <div class="linha-btn"><button class="btn-primario" id="m-fim" data-i18n="btn_fechar">Fechar</button></div>`);
+      $("m-fim").onclick = modal.fechar;
+    };
+  }
+  passo1();
 }
 
 async function sugerirFornecedores() {

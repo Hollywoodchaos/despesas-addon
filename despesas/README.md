@@ -38,6 +38,10 @@
 | 🗣️ **6 languages** | Português, English, Español, Français, Deutsch, Русский |
 | 🔒 **Local & private** | SQLite database stored in the add-on's own folder. No cloud, no account |
 
+## 📖 Manual
+
+[English](MANUAL.en.md) · [Português](MANUAL.pt.md)
+
 ## 🚀 Installation
 
 1. In Home Assistant: **Settings → Add-ons → Add-on Store → ⋮ → Repositories**

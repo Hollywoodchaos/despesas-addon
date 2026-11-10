@@ -19,7 +19,7 @@ import despesas_db as db  # noqa: E402
 
 from flask import Flask, request, jsonify, send_from_directory  # noqa: E402
 
-VERSAO = "2.0.2"
+VERSAO = "2.1.0"
 LINK_PRO = "https://ko-fi.com/s/fadc8f11ba"
 LIMITE_GRATIS = 15
 
@@ -132,6 +132,35 @@ def api_add_fornecedor():
     if not categoria or not nome:
         return jsonify({"ok": False, "erro": "categoria e nome sao obrigatorios"}), 400
     return jsonify(chamar(db.add_fornecedor, categoria, nome, nif))
+
+
+def _pin_ok(dados):
+    pin = str(OPCOES.get("pin_administrador", "") or "").strip()
+    return (not pin) or str(dados.get("pin", "")).strip() == pin
+
+
+@app.route("/api/fornecedor/mover", methods=["POST"])
+def api_mover_fornecedor():
+    d = request.get_json(force=True) or {}
+    if not _pin_ok(d):
+        return jsonify({"ok": False, "erro": "pin_incorreto", "erro_codigo": "pin_incorreto"}), 403
+    return jsonify(chamar(db.mover_fornecedor, d.get("categoria", ""), d.get("nome", ""), d.get("nova_categoria", "")))
+
+
+@app.route("/api/fornecedor/juntar", methods=["POST"])
+def api_juntar_fornecedor():
+    d = request.get_json(force=True) or {}
+    if not _pin_ok(d):
+        return jsonify({"ok": False, "erro": "pin_incorreto", "erro_codigo": "pin_incorreto"}), 403
+    return jsonify(chamar(db.juntar_fornecedor, d.get("categoria", ""), d.get("nome", ""), d.get("destino", "")))
+
+
+@app.route("/api/fornecedor/eliminar", methods=["POST"])
+def api_eliminar_fornecedor():
+    d = request.get_json(force=True) or {}
+    if not _pin_ok(d):
+        return jsonify({"ok": False, "erro": "pin_incorreto", "erro_codigo": "pin_incorreto"}), 403
+    return jsonify(chamar(db.eliminar_fornecedor, d.get("categoria", ""), d.get("nome", "")))
 
 
 @app.route("/api/formas_pagamento", methods=["GET"])
